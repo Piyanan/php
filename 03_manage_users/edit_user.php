@@ -9,11 +9,11 @@ $username = $password = $confirm_password = "";
 $username_err = $password_err = $confirm_password_err = "";
 
 // Get user data from database
-if (isset($_GET['user_id'])) {
+if (!empty($_GET['user_id'])) {
+  $user_id = $_GET['user_id'];
   $sql = "SELECT * FROM users WHERE user_id = ?";
   $stmt = mysqli_prepare($mysqli, $sql);
   $stmt->bind_param("i", $user_id);
-  $user_id = $_GET['user_id'];
   $stmt->execute();
   $stmt->bind_result($user_id, $username, $hashed_password, $create_at);
   if (!$stmt->fetch()) {
@@ -78,19 +78,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   
   // Check input errors before inserting in database
   if (empty($username_err) && empty($password_err) && empty($confirm_password_err)) {
-
     if (!empty($_GET['user_id'])) {
       // Update user information in database
-      $sql = "UPDATE users SET name = ?, password = ? WHERE user_id = ?";
-
+      $sql = "UPDATE users SET username = ?, password = ? WHERE user_id = ?";
       if ($stmt = $mysqli->prepare($sql)) {
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("ssi", $param_username, $param_password, $param_user_id);
-
-        // Set parameters
-        $param_username = $username;
-        $param_user_id = $user_id;
-        if (!empty($_POST["password"])) {
+        $stmt->bind_param("ssi", $param_username, $param_password, $user_id);
+        $param_username = trim($_POST["username"]);
+        
+        if (!empty($password)) {
           $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
         } else {
           $param_password = $hashed_password;
@@ -110,7 +106,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       }
     }
-
     // Attempt to execute the prepared statement
     if ($stmt->execute()) {
       // Redirect to login page
