@@ -27,7 +27,8 @@ $result = mysqli_query($mysqli, $sql);
 </head>
 
 <body>
-  <h1 class="mb-3 text-center">Manage Users</h1>
+  <?php include("navbar.php"); ?>
+  <h1 class="m-5 text-center">Manage Users</h1>
   <div class="container">
 
     <div class="table-responsive">

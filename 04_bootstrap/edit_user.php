@@ -152,7 +152,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 
 <body>
-  <h1 class="mb-3 text-center">
+  <?php include("navbar.php"); ?>
+  <h1 class="m-5 text-center">
     <?php echo (empty($_GET['user_id'])) ? "Add user" : "Edit user"; ?>
   </h1>
   <div class="container">
@@ -190,6 +191,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "</ul>";
   }
   ?>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+    crossorigin="anonymous"></script>
 </body>
 
 </html>
