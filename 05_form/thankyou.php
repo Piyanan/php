@@ -1,3 +1,19 @@
+<?php
+
+// Include config file
+require_once "config.php";
+
+$participant_id = $_GET['participant_id'];
+$sql = "SELECT name FROM participants WHERE participant_id = ?";
+$stmt = mysqli_prepare($mysqli, $sql);
+$stmt->bind_param("i", $participant_id);
+$stmt->execute();
+$stmt->bind_result($name);
+if (!$stmt->fetch()) {
+  echo "Error fetching participant data from database.";
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,7 +26,9 @@
 
 <body>
   <div class="container">
-    <h2 class="m-5 text-center">Thank you</h2>
+    <h2 class="m-5 text-center">Thank you
+      <?php echo $name; ?>
+    </h2>
   </div>
 
   <!-- Bootstrap JS -->

@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 $error = null;
 
 // Check if the form is submitted
@@ -8,8 +6,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   // Include config file
   require_once "config.php";
+  require_once "functions.php";
 
   // Get form data
+  sanitizeXSS();
   $name = $_POST['name'];
   $email = $_POST['email'];
   $phone = $_POST['phone'];
@@ -43,12 +43,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $stmt->bind_param("sssss", $name, $email, $phone, $address, $type);
   if ($stmt->execute()) {
     // Upload personal photo
-    $target_dir = "uploads/";
+    $target_dir = "./uploads/";
     $target_file = $target_dir . $stmt->insert_id . ".jpg";
-    move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file);
+    if (!move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file)) {
+      echo "Error uploading photo : " . $_FILES["photo"]["error"] . "";
+    }
 
     // Redirect to thank you page
-    header("Location: thankyou.php");
+    header("Location: thankyou.php?participant_id=" . $stmt->insert_id);
   } else {
     echo "Error: " . $stmt->error;
   }
