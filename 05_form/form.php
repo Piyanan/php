@@ -6,10 +6,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   // Include config file
   require_once "config.php";
-  require_once "functions.php";
+  require_once "Functions.php";
 
   // Get form data
-  sanitizeXSS();
+  $functions = new Functions();
+  $functions->sanitizeXSS();
   $name = $_POST['name'];
   $email = $_POST['email'];
   $phone = $_POST['phone'];
@@ -23,6 +24,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
   if (empty($email)) {
     $error['email'] = "Please fill your email.";
+  } else {
+    // Check if email is already registered
+    $sql = "SELECT participant_id FROM participants WHERE email = ?";
+    if ($stmt = $mysqli->prepare($sql)) {
+      $stmt->bind_param("s", $email);
+      if ($stmt->execute()) {
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+          $error['email'] = "This email is already registered.";
+        }
+      } else {
+        $error['db'] = "Error: " . $stmt->error;
+      }
+      $stmt->close();
+    }
   }
   if (empty($phone)) {
     $error['phone'] = "Please fill your phone number.";
@@ -37,27 +53,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $error['type'] = "Please select your type type.";
   }
 
-  // prepare statement
-  $stmt = mysqli_prepare($mysqli, "INSERT INTO participants (name, email, phone, address, type) VALUES (?, ?, ?, ?, ?)");
-  // bind parameters
-  $stmt->bind_param("sssss", $name, $email, $phone, $address, $type);
-  if ($stmt->execute()) {
-    // Upload personal photo
-    $target_dir = "./uploads/";
-    $target_file = $target_dir . $stmt->insert_id . ".jpg";
-    if (!move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file)) {
-      echo "Error uploading photo : " . $_FILES["photo"]["error"] . "";
-    }
+  if (empty($error)) {
+    // prepare statement
+    $stmt = mysqli_prepare($mysqli, "INSERT INTO participants (name, email, phone, address, type) VALUES (?, ?, ?, ?, ?)");
+    // bind parameters
+    $stmt->bind_param("sssss", $name, $email, $phone, $address, $type);
+    if ($stmt->execute()) {
+      // Check photo size and type
+      $max_photo_size = 1048576; // 1 MB
+      $allowed_photo_types = array('image/jpeg');
+      if ($photo_size > $max_photo_size) {
+        $errors['photo'] = 'Photo size must be less than 1 MB';
+      }
+      if (!in_array($photo_type, $allowed_photo_types)) {
+        $errors['photo'] = 'Photo must be in JPEG format';
+      }
 
-    // Redirect to thank you page
-    header("Location: thankyou.php?participant_id=" . $stmt->insert_id);
-  } else {
-    echo "Error: " . $stmt->error;
+      // Upload personal photo
+      $target_dir = "uploads/";
+      $target_file = $target_dir . md5($stmt->insert_id . "_PHYSICS_") . ".jpg";
+      if (!move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file)) {
+        $error['photo'] = "Error uploading photo : " . $_FILES["photo"]["error"] . "";
+      }
+      // Redirect to thank you page
+      header("Location: thankyou.php?participant_id=" . $stmt->insert_id);
+    } else {
+      $error['db'] = "Error: " . $stmt->error;
+    }
   }
 
   // Close database connection
   $stmt->close();
-  mysqli_close($mysqli);
+  $mysqli->close();
 
 }
 ?>
@@ -78,17 +105,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <form action="" method="post" enctype="multipart/form-data">
       <div class="mb-3">
         <label for="name" class="form-label">Name</label>
-        <input type="text" class="form-control" name="name" id="name" required>
+        <input type="text" class="form-control <?php echo (isset($error['name'])) ? "is-invalid" : ''; ?>" name="name"
+          id="name" value="<?php echo $name ?? ''; ?>" required>
+        <div class="invalid-feedback">
+          <?php echo (isset($error['name'])) ? $error['name'] : ''; ?>
+        </div>
       </div>
       <div class="mb-3">
         <label for="email" class="form-label">Email address</label>
-        <input type="email" class="form-control" name="email" id="email" placeholder="email@gmail.com" required>
+        <input type="email" class="form-control <?php echo (isset($error['email'])) ? "is-invalid" : ''; ?>"
+          name="email" id="email" placeholder="email@gmail.com" value="<?php echo $email ?? ''; ?>" required>
+        <div class="invalid-feedback">
+          <?php echo (isset($error['email'])) ? $error['email'] : ''; ?>
+        </div>
       </div>
       <div class="mb-3">
         <label for="phone" class="form-label">Phone number</label>
         <div class="input-group">
           <span class="input-group-text" id="nation_tel">+66</span>
-          <input type="tel" class="form-control" name="phone" id="phone" pattern="[0-9]{8+}" aria-label="Phone"
+          <input type="tel" class="form-control" name="phone" id="phone" pattern="^[0-9]{8,9}$" aria-label="Phone"
             aria-describedby="nation_tel" placeholder="22015726" required>
         </div>
       </div>
