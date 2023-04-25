@@ -19,6 +19,7 @@ let table = new DataTable('#participants_table', {
       "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
         $(nTd).html(`<image src="${base_url}/uploads/${oData.photo}.jpg" width='100px'>`);
       },
+      orderable: false,
     },
     { data: 'name' },
     { data: 'email' },

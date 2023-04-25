@@ -22,33 +22,47 @@ $orderByDirection = $_POST['order'][0]['dir'];
 $query = "SELECT * FROM participants WHERE name LIKE ? OR email LIKE ?";
 
 if ($orderByColumn == 2) {
-  $query .= " ORDER BY name ?";
+  $query .= " ORDER BY name";
 } elseif ($orderByColumn == 3) {
-  $query .= " ORDER BY email ?";
+  $query .= " ORDER BY email";
+} elseif ($orderByColumn == 4) {
+  $query .= " ORDER BY register_at";
+}
+if (!empty($orderByDirection)) {
+  $query .= " " . $orderByDirection;
 }
 
 $query .= " LIMIT ?, ?";
 
-$stmt = mysqli_prepare($mysqli, $query);
-if ($orderByColumn == 2 || $orderByColumn == 3) {
-  $stmt->bind_param("ssiii", $searchValue, $searchValue, $orderByColumn, $start, $length);
-} else {
-  $stmt->bind_param("ssii", $searchValue, $searchValue, $start, $length);
-}
-mysqli_stmt_execute($stmt);
+// var_dump($query);
+// die;
 
-$result = mysqli_stmt_get_result($stmt);
-$data = array();
-while ($row = mysqli_fetch_assoc($result)) {
-  // var_dump($row);
-  // die;
-  $row['photo'] = md5($row['participant_id'] . "_PHYSICS_");
-  $data[] = $row;
+if ($stmt = $mysqli->prepare($query)) {
+  if ($stmt->bind_param("ssii", $searchValue, $searchValue, $start, $length)) {
+    if ($stmt->execute) {
+      mysqli_stmt_execute($stmt);
+      $result = mysqli_stmt_get_result($stmt);
+      $stmt->close();
+      $data = array();
+      while ($row = mysqli_fetch_assoc($result)) {
+        $row['photo'] = md5($row['participant_id'] . "_PHYSICS_");
+        $data[] = $row;
+      }
+    }
+  } else {
+    echo "Error bind: " . $stmt->error;
+    die;
+  }
+} else {
+  var_dump($orderByColumn);
+  echo "Error prepare: " . $mysqli->error;
+  die;
 }
 
 $queryCount = "SELECT COUNT(*) AS total FROM participants";
 $resultCount = mysqli_query($mysqli, $queryCount);
 $rowCount = mysqli_fetch_assoc($resultCount)['total'];
+$mysqli->close();
 
 $response = array(
   "draw" => intval($draw),

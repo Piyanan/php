@@ -13,5 +13,5 @@ if ($mysqli->connect_error) {
   die("ERROR: Could not connect. " . $mysqli->connect_error);
 }
 
-const BASE_URL = 'https://10.9.42.233/yo';
+define('BASE_URL', 'https://10.9.42.233/yo');
 ?>

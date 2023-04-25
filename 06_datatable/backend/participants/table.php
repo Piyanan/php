@@ -21,7 +21,9 @@ if (!isset($_SESSION["username"])) {
 </head>
 
 <body>
-  <?php include("../../navbar.php"); ?>
+  <?php
+  require_once __DIR__ . "/../../navbar.php";
+  ?>
   <h2 class="m-5 text-center">Participants list</h2>
   <div class="container">
     <div class="table-responsive">
