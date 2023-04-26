@@ -17,7 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $address = $_POST['address'];
   $photo = $_FILES['photo']['name'];
   $type = $_POST['type'];
-
+var_dump($_POST);
+die;
   // Validate form data
   if (empty($name)) {
     $error['name'] = "Please fill your name.";
@@ -75,8 +76,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       if (!move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file)) {
         $error['photo'] = "Error uploading photo : " . $_FILES["photo"]["error"] . "";
       }
-      // Redirect to thank you page
-      header("Location: thankyou.php?participant_id=" . $stmt->insert_id);
+      if (empty($error)){
+        // Redirect to thank you page
+        header("Location: thankyou.php?participant_id=" . $stmt->insert_id);
+      }
     } else {
       $error['db'] = "Error: " . $stmt->error;
     }
@@ -133,7 +136,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
       <div class="mb-3">
         <label for="photo" class="form-label">Personal Photo</label>
-        <input type="file" class="form-control" name="photo" id="photo" accept="image/jpeg" required>
+        <input type="file" class="form-control <?php echo (isset($error['photo'])) ? "is-invalid" : ''; ?>" name="photo" id="photo" accept="image/jpeg" required>
+        <div class="invalid-feedback">
+          <?php echo (isset($error['photo'])) ? $error['photo'] : ''; ?>
+        </div>
       </div>
       <div class="mb-3">
         <label for="type" class="form-label">Register as</label>
